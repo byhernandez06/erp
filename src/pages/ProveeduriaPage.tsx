@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import OrdenDeCompraModal from "@/components/OrdenDeCompraModal";
-import { obtenerOrdenesDeCompra } from "@/firebase/ordenesDeCompra";
+import { obtenerOrdenesDeCompra, OrdenDeCompraResponse } from "@/services/ordenesDeCompraService";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/store/store";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import logo from "@/assets/images/logo-oreamuno.png";
@@ -8,31 +10,52 @@ import logo from "@/assets/images/logo-oreamuno.png";
 const ProveeduriaPage: React.FC = () => {
     const [showModal, setShowModal] = useState(false);
     const [showDetailModal, setShowDetailModal] = useState(false);
-    const [selectedOrder, setSelectedOrder] = useState<any>(null);
-    const [orders, setOrders] = useState<any[]>([]);
+    const [selectedOrder, setSelectedOrder] = useState<OrdenDeCompraResponse | null>(null);
+    const [orders, setOrders] = useState<OrdenDeCompraResponse[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string>("");
+
+    const { user } = useSelector((state: RootState) => state.auth);
 
     useEffect(() => {
         fetchOrders();
-    }, []);
+    }, [user]);
 
     const fetchOrders = async () => {
+        if (!user) return;
+        
+        setLoading(true);
+        setError("");
+        
         try {
-            const data = await obtenerOrdenesDeCompra();
-            const estados = ["Pendiente", "En proceso", "Completado"];
-            const withStatus = data.map((o: any) => ({
-                ...o,
-                estado: o.estado || estados[Math.floor(Math.random() * estados.length)],
-            }));
-            setOrders(withStatus);
+            const data = await obtenerOrdenesDeCompra(user.uid);
+            setOrders(data);
         } catch (error) {
             console.error("Error cargando órdenes:", error);
+            setError("Error cargando las órdenes de compra");
+        } finally {
+            setLoading(false);
         }
     };
 
-    const handleView = (order: any) => {
+    const handleView = (order: OrdenDeCompraResponse) => {
         setSelectedOrder(order);
         setShowDetailModal(true);
     };
+
+    const handleModalClose = () => {
+        setShowModal(false);
+        // Recargar las órdenes después de crear una nueva
+        fetchOrders();
+    };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="text-lg">Cargando órdenes...</div>
+            </div>
+        );
+    }
 
     return (
         <div className="flex flex-col w-full bg-slate-50 text-[#0d141b]">
@@ -48,6 +71,13 @@ const ProveeduriaPage: React.FC = () => {
                     Nueva Orden
                 </button>
             </div>
+
+            {/* ERROR MESSAGE */}
+            {error && (
+                <div className="mx-6 mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-red-600 text-sm">{error}</p>
+                </div>
+            )}
 
             {/* FILTROS */}
             <div className="flex flex-wrap items-center justify-between gap-4 px-6 py-4 bg-white border-b border-[#cfdbe7]">
@@ -107,10 +137,9 @@ const ProveeduriaPage: React.FC = () => {
                                 orders.map((order) => (
                                     <ActivityRow
                                         key={order.id}
-                                        date={
-                                            order.fechaCreacion?.toDate
-                                                ? order.fechaCreacion.toDate().toLocaleDateString()
-                                                : "—"
+                                        date={order.fechaCreacion 
+                                            ? new Date(order.fechaCreacion).toLocaleDateString() 
+                                            : "—"
                                         }
                                         provider={order.proveedor || "Sin proveedor"}
                                         description={order.descripcion || "Sin descripción"}
@@ -133,7 +162,7 @@ const ProveeduriaPage: React.FC = () => {
             {/* MODALES */}
             <OrdenDeCompraModal
                 isOpen={showModal}
-                onClose={() => setShowModal(false)}
+                onClose={handleModalClose}
             />
 
             {showDetailModal && selectedOrder && (
@@ -215,7 +244,7 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
 /* -------- MODAL DE DETALLE -------- */
 
 interface DetalleOrdenModalProps {
-    order: any;
+    order: OrdenDeCompraResponse;
     onClose: () => void;
 }
 
@@ -224,8 +253,8 @@ const DetalleOrdenModal: React.FC<DetalleOrdenModalProps> = ({
     onClose,
 }) => {
     const handleExportCSV = () => {
-        const csv = `Proveedor,Descripción,Estado,Fecha\n"${order.proveedor}","${order.descripcion}","${order.estado}","${order.fechaCreacion?.toDate
-            ? order.fechaCreacion.toDate().toLocaleDateString()
+        const csv = `Proveedor,Descripción,Estado,Fecha\n"${order.proveedor}","${order.descripcion}","${order.estado}","${order.fechaCreacion 
+            ? new Date(order.fechaCreacion).toLocaleDateString()
             : ""
             }"`;
         const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -243,7 +272,7 @@ const DetalleOrdenModal: React.FC<DetalleOrdenModalProps> = ({
 
         // ---- LOGO ----
         try {
-            doc.addImage(logo, "PNG", marginX, 20, 60, 60); // x, y, width, height
+            doc.addImage(logo, "PNG", marginX, 20, 60, 60);
         } catch (err) {
             console.warn("No se pudo cargar el logo:", err);
         }
@@ -251,7 +280,7 @@ const DetalleOrdenModal: React.FC<DetalleOrdenModalProps> = ({
         // ---- ENCABEZADO ----
         doc.setFontSize(18);
         doc.setFont("helvetica", "bold");
-        doc.text("ORDEN DE COMPRA", marginX + 80, 55); // desplazamos a la derecha del logo
+        doc.text("ORDEN DE COMPRA", marginX + 80, 55);
 
         doc.setFontSize(11);
         doc.setFont("helvetica", "normal");
@@ -261,7 +290,7 @@ const DetalleOrdenModal: React.FC<DetalleOrdenModalProps> = ({
         // ---- DATOS GENERALES ----
         const datosGenerales = [
             ["Número de orden:", order.numeroOrden || "—"],
-            ["Fecha:", order.fecha || (order.fechaCreacion?.toDate ? order.fechaCreacion.toDate().toLocaleDateString() : "—")],
+            ["Fecha:", order.fecha || (order.fechaCreacion ? new Date(order.fechaCreacion).toLocaleDateString() : "—")],
             ["Proveedor:", order.proveedor || "—"],
             ["Cédula Jurídica:", order.cedulaJuridica || "—"],
             ["Licitación:", order.licitacion || "—"],
@@ -352,7 +381,6 @@ const DetalleOrdenModal: React.FC<DetalleOrdenModalProps> = ({
         doc.save(`orden-${order.numeroOrden || order.id || "sin-numero"}.pdf`);
     };
 
-
     return (
         <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
             <div className="bg-white rounded-xl shadow-lg w-[480px] p-6">
@@ -369,9 +397,15 @@ const DetalleOrdenModal: React.FC<DetalleOrdenModalProps> = ({
                     </p>
                     <p>
                         <strong>Fecha:</strong>{" "}
-                        {order.fechaCreacion?.toDate
-                            ? order.fechaCreacion.toDate().toLocaleDateString()
+                        {order.fechaCreacion
+                            ? new Date(order.fechaCreacion).toLocaleDateString()
                             : "—"}
+                    </p>
+                    <p>
+                        <strong>Número de Orden:</strong> {order.numeroOrden || "—"}
+                    </p>
+                    <p>
+                        <strong>Proyecto:</strong> {order.proyecto || "—"}
                     </p>
                 </div>
                 <div className="flex justify-end gap-2 mt-6">

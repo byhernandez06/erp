@@ -1,27 +1,38 @@
 import React, { useState } from "react";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "@/firebase/config";
+import { signInUser } from "@/services/authService";
 import { useDispatch } from "react-redux";
 import { setUser } from "@/store/slices/authSlice";
-import { User, Lock } from "lucide-react"; // <-- íconos Lucide
+import { User, Lock } from "lucide-react";
 import logo from "@/assets/images/logo-oreamuno.png";
 
 const LoginPage: React.FC = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
     const dispatch = useDispatch();
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
+        setLoading(true);
+        setError("");
+
         try {
-            const userCredential = await signInWithEmailAndPassword(auth, email, password);
-            const user = userCredential.user;
-            dispatch(setUser({ uid: user.uid, email: user.email }));
+            const { user, token } = await signInUser(email, password);
+            
+            // Guardar el token en localStorage
+            localStorage.setItem('authToken', token);
+            
+            // Actualizar el estado de Redux
+            dispatch(setUser(user));
+            
+            // Redirigir al dashboard
             window.location.href = "/";
         } catch (err: any) {
-            console.error(err);
-            setError("Usuario o contraseña inválidos");
+            console.error('Error en login:', err);
+            setError(err.message || "Usuario o contraseña inválidos");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -52,19 +63,20 @@ const LoginPage: React.FC = () => {
                         <div className="relative">
                             <User className="absolute left-3 top-1/2 -translate-y-1/2 text-subtle-light dark:text-subtle-dark" size={20} />
                             <input
-                                id="username"
-                                type="text"
-                                placeholder="Usuario"
+                                id="email"
+                                type="email"
+                                placeholder="Correo electrónico"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
+                                disabled={loading}
                                 className="appearance-none rounded-lg relative block w-full pl-10 pr-3 py-3
                                     border border-border-light dark:border-border-dark
                                     placeholder-subtle-light dark:placeholder-subtle-dark
                                     text-content-light dark:text-content-dark
                                     bg-background-light dark:bg-background-dark
                                     focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary
-                                    sm:text-sm transition"
+                                    sm:text-sm transition disabled:opacity-50"
                             />
                         </div>
 
@@ -78,13 +90,14 @@ const LoginPage: React.FC = () => {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
+                                disabled={loading}
                                 className="appearance-none rounded-lg relative block w-full pl-10 pr-3 py-3
                                     border border-border-light dark:border-border-dark
                                     placeholder-subtle-light dark:placeholder-subtle-dark
                                     text-content-light dark:text-content-dark
                                     bg-background-light dark:bg-background-dark
                                     focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary
-                                    sm:text-sm transition"
+                                    sm:text-sm transition disabled:opacity-50"
                             />
                         </div>
                     </div>
@@ -119,15 +132,26 @@ const LoginPage: React.FC = () => {
                     <div>
                         <button
                             type="submit"
+                            disabled={loading}
                             className="group relative w-full flex justify-center py-3 px-4 text-sm font-medium
                                 rounded-lg text-white bg-primary hover:bg-primary/90
                                 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary
-                                transition-colors"
+                                transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            Ingresar
+                            {loading ? 'Ingresando...' : 'Ingresar'}
                         </button>
                     </div>
                 </form>
+
+                {/* Información de desarrollo */}
+                <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <p className="text-xs text-blue-600 dark:text-blue-400 text-center">
+                        <strong>Modo Desarrollo:</strong> Usando base de datos MySQL local
+                    </p>
+                    <p className="text-xs text-blue-600 dark:text-blue-400 text-center mt-1">
+                        Para crear una cuenta, contacte al administrador del sistema
+                    </p>
+                </div>
             </div>
         </div>
     );

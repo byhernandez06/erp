@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { crearOrdenDeCompra } from "@/firebase/ordenesDeCompra";
+import { crearOrdenDeCompra } from "@/services/ordenesDeCompraService";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/store/store";
 
 interface OrdenDeCompraModalProps {
     isOpen: boolean;
@@ -8,6 +10,8 @@ interface OrdenDeCompraModalProps {
 }
 
 const OrdenDeCompraModal: React.FC<OrdenDeCompraModalProps> = ({ isOpen, onClose }) => {
+    const { user } = useSelector((state: RootState) => state.auth);
+    
     const [form, setForm] = useState({
         licitacion: "",
         fecha: "",
@@ -79,15 +83,46 @@ const OrdenDeCompraModal: React.FC<OrdenDeCompraModalProps> = ({ isOpen, onClose
         }));
     };
 
-
     const handleGuardar = async () => {
+        if (!user) {
+            setMensaje("❌ Error: Usuario no autenticado");
+            return;
+        }
+
         try {
             setLoading(true);
             setMensaje(null);
-            await crearOrdenDeCompra(form);
+            
+            await crearOrdenDeCompra(user.uid, form);
             setMensaje("✅ Orden guardada correctamente");
+            
+            // Limpiar el formulario
+            setForm({
+                licitacion: "",
+                fecha: "",
+                numeroOrden: "",
+                proveedor: "",
+                descripcion: "",
+                proyecto: "",
+                lugarEntrega: "",
+                solicitante: "",
+                cedulaJuridica: "",
+                items: [
+                    {
+                        cantidad: 0,
+                        unidad: "",
+                        detalle: "",
+                        cuenta: "",
+                        nombre: "",
+                        costoUnitario: 0,
+                        montoTotal: 0,
+                    },
+                ],
+            });
+            
             setTimeout(() => onClose(), 1500);
-        } catch {
+        } catch (error) {
+            console.error('Error guardando orden:', error);
             setMensaje("❌ Error al guardar la orden");
         } finally {
             setLoading(false);
@@ -351,7 +386,6 @@ const OrdenDeCompraModal: React.FC<OrdenDeCompraModalProps> = ({ isOpen, onClose
                                         </div>
                                     </div>
 
-
                                     {/* Mensaje de estado */}
                                     {mensaje && (
                                         <p className="text-center font-medium mt-4">
@@ -363,7 +397,7 @@ const OrdenDeCompraModal: React.FC<OrdenDeCompraModalProps> = ({ isOpen, onClose
                                     <div className="flex flex-wrap justify-end gap-3 pt-4">
                                         <button
                                             onClick={handleGuardar}
-                                            disabled={loading}
+                                            disabled={loading || !user}
                                             className="bg-[#1380ec] text-white px-4 h-10 rounded-lg font-bold disabled:opacity-50"
                                         >
                                             {loading ? "Guardando..." : "Guardar Orden"}

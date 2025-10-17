@@ -1,84 +1,117 @@
-// src/components/Sidebar.tsx
 import React from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
-import { logout } from "@/store/slices/authSlice";
-import {
-    LayoutDashboard,
-    Truck,
-    DollarSign,
-    Users,
-    BarChart3,
-    Landmark,
-    BookOpen,
-    Package,
-    FileText,
-    LogOut
-} from "lucide-react";
-
-interface SidebarItemProps {
-    icon: React.ReactNode;
-    label: string;
-    to: string;
-}
-
-const SidebarItem: React.FC<SidebarItemProps> = ({ icon, label, to }) => {
-    const location = useLocation();
-    const isActive = location.pathname === to;
-
-    return (
-        <Link
-            to={to}
-            className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors
-                ${isActive ? "bg-[#e7edf3] text-[#1380ec]" : "text-[#0d141b] hover:text-[#1380ec] hover:bg-[#f1f5f9]"}`}
-        >
-            <div className="flex-shrink-0">{icon}</div>
-            <p className="text-sm font-medium leading-normal">{label}</p>
-        </Link>
-    );
-};
+import { Link, useLocation } from "react-router-dom";
+import { Home, Package, LogOut } from "lucide-react";
+import { useSelector } from "react-redux";
+import { useAuth } from "@/contexts/AuthContext";
+import type { RootState } from "@/store/store";
+import logo from "@/assets/images/logo-oreamuno.png";
 
 const Sidebar: React.FC = () => {
-    const dispatch = useDispatch();
-    const navigate = useNavigate();
+    const location = useLocation();
+    const { user } = useSelector((state: RootState) => state.auth);
+    const { logout } = useAuth();
+
+    const menuItems = [
+        {
+            path: "/",
+            name: "Dashboard",
+            icon: Home,
+        },
+        {
+            path: "/proveeduria",
+            name: "Proveeduría",
+            icon: Package,
+        },
+    ];
 
     const handleLogout = () => {
-        dispatch(logout());
-        navigate("/login");
+        if (window.confirm('¿Está seguro que desea cerrar sesión?')) {
+            logout();
+        }
     };
 
     return (
-        <aside className="flex flex-col justify-between w-80 h-screen bg-slate-50 p-4">
-            {/* Branding */}
-            <div className="flex flex-col mb-4">
-                <h1 className="text-[#0d141b] text-base font-medium">Municipalidad CR</h1>
-                <p className="text-[#4c739a] text-sm font-normal">Panel de Administración</p>
+        <div className="flex flex-col h-full bg-white border-r border-[#cfdbe7] w-64">
+            {/* Logo y título */}
+            <div className="flex items-center gap-3 p-6 border-b border-[#cfdbe7]">
+                <img
+                    src={logo}
+                    alt="Logo Municipalidad"
+                    className="h-10 w-10 object-contain"
+                />
+                <div>
+                    <h1 className="text-lg font-bold text-[#0d141b]">
+                        ERP Municipal
+                    </h1>
+                    <p className="text-sm text-[#4c739a]">
+                        Oreamuno
+                    </p>
+                </div>
             </div>
 
-            {/* Menú scrollable */}
-            <div className="flex-1 flex flex-col gap-2 overflow-y-auto">
-                <SidebarItem label="Dashboard" icon={<LayoutDashboard size={20} />} to="/dashboard" />
-                <SidebarItem label="Proveeduría" icon={<Truck size={20} />} to="/proveeduria" />
-                <SidebarItem label="Finanzas" icon={<DollarSign size={20} />} to="/finanzas" />
-                <SidebarItem label="Recursos Humanos" icon={<Users size={20} />} to="/rrhh" />
-                <SidebarItem label="Presupuesto" icon={<BarChart3 size={20} />} to="/presupuesto" />
-                <SidebarItem label="Tesorería" icon={<Landmark size={20} />} to="/tesoreria" />
-                <SidebarItem label="Contabilidad" icon={<BookOpen size={20} />} to="/contabilidad" />
-                <SidebarItem label="Inventarios" icon={<Package size={20} />} to="/inventarios" />
-                <SidebarItem label="Reportes" icon={<FileText size={20} />} to="/reportes" />
+            {/* Información del usuario */}
+            <div className="p-4 border-b border-[#cfdbe7] bg-slate-50">
+                <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                        {user?.email?.charAt(0).toUpperCase() || 'U'}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-[#0d141b] truncate">
+                            {user?.email || 'Usuario'}
+                        </p>
+                        <p className="text-xs text-[#4c739a]">
+                            Administrador
+                        </p>
+                    </div>
+                </div>
             </div>
 
-            {/* Footer fijo abajo */}
-            <div className="pt-4 border-t border-slate-200">
+            {/* Navegación */}
+            <nav className="flex-1 p-4">
+                <ul className="space-y-2">
+                    {menuItems.map((item) => {
+                        const Icon = item.icon;
+                        const isActive = location.pathname === item.path;
+                        
+                        return (
+                            <li key={item.path}>
+                                <Link
+                                    to={item.path}
+                                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                        isActive
+                                            ? "bg-[#1380ec] text-white"
+                                            : "text-[#4c739a] hover:bg-slate-100 hover:text-[#0d141b]"
+                                    }`}
+                                >
+                                    <Icon size={18} />
+                                    {item.name}
+                                </Link>
+                            </li>
+                        );
+                    })}
+                </ul>
+            </nav>
+
+            {/* Botón de logout */}
+            <div className="p-4 border-t border-[#cfdbe7]">
                 <button
                     onClick={handleLogout}
-                    className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+                    className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
                 >
-                    <LogOut size={20} />
-                    <span className="text-sm font-medium">Cerrar sesión</span>
+                    <LogOut size={18} />
+                    Cerrar Sesión
                 </button>
             </div>
-        </aside>
+
+            {/* Información de desarrollo */}
+            <div className="p-4 border-t border-[#cfdbe7] bg-blue-50">
+                <div className="text-xs text-blue-600">
+                    <p className="font-semibold">Modo Desarrollo</p>
+                    <p>Base de datos: MySQL</p>
+                    <p>Estado: Conectado</p>
+                </div>
+            </div>
+        </div>
     );
 };
 
