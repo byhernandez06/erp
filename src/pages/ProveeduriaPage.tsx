@@ -1,18 +1,75 @@
 import React, { useState, useEffect } from "react";
 import OrdenDeCompraModal from "@/components/OrdenDeCompraModal";
-import { obtenerOrdenesDeCompra, OrdenDeCompraResponse } from "@/services/ordenesDeCompraService";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/store/store";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import logo from "@/assets/images/logo-oreamuno.png";
 
+// Datos de prueba mientras no hay endpoint para órdenes
+const mockOrders = [
+    {
+        id: 1,
+        uid: "user-1",
+        licitacion: "Licitación 2024-001",
+        fecha: "2024-01-15",
+        numeroOrden: "ORD-001",
+        proveedor: "Proveedor ABC S.A.",
+        descripcion: "Compra de material de oficina",
+        proyecto: "Proyecto Administrativo",
+        lugarEntrega: "Oficinas Municipales",
+        solicitante: "Juan Pérez",
+        cedulaJuridica: "3-101-123456",
+        estado: "Completado",
+        fechaCreacion: "2024-01-15T10:00:00Z",
+        fechaActualizacion: "2024-01-15T10:00:00Z",
+        items: [
+            {
+                cantidad: 50,
+                unidad: "Unidades",
+                detalle: "Papel bond tamaño carta",
+                cuenta: "12345",
+                nombre: "Papel bond",
+                costoUnitario: 2.50,
+                montoTotal: 125.00
+            }
+        ]
+    },
+    {
+        id: 2,
+        uid: "user-1",
+        licitacion: "Licitación 2024-002",
+        fecha: "2024-01-20",
+        numeroOrden: "ORD-002",
+        proveedor: "Suministros XYZ Ltda.",
+        descripcion: "Equipos de cómputo",
+        proyecto: "Modernización IT",
+        lugarEntrega: "Departamento de Sistemas",
+        solicitante: "María González",
+        cedulaJuridica: "3-102-654321",
+        estado: "En proceso",
+        fechaCreacion: "2024-01-20T14:30:00Z",
+        fechaActualizacion: "2024-01-20T14:30:00Z",
+        items: [
+            {
+                cantidad: 3,
+                unidad: "Unidades",
+                detalle: "Computadoras de escritorio",
+                cuenta: "54321",
+                nombre: "Computadoras",
+                costoUnitario: 800.00,
+                montoTotal: 2400.00
+            }
+        ]
+    }
+];
+
 const ProveeduriaPage: React.FC = () => {
     const [showModal, setShowModal] = useState(false);
     const [showDetailModal, setShowDetailModal] = useState(false);
-    const [selectedOrder, setSelectedOrder] = useState<OrdenDeCompraResponse | null>(null);
-    const [orders, setOrders] = useState<OrdenDeCompraResponse[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [selectedOrder, setSelectedOrder] = useState<any>(null);
+    const [orders, setOrders] = useState<any[]>([]);
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string>("");
 
     const { user } = useSelector((state: RootState) => state.auth);
@@ -22,14 +79,14 @@ const ProveeduriaPage: React.FC = () => {
     }, [user]);
 
     const fetchOrders = async () => {
-        if (!user) return;
-        
         setLoading(true);
         setError("");
         
         try {
-            const data = await obtenerOrdenesDeCompra(user.uid);
-            setOrders(data);
+            // Por ahora usar datos mock hasta que se implemente el endpoint
+            // TODO: Reemplazar con llamada real al backend cuando esté disponible
+            // const data = await obtenerOrdenesDeCompra();
+            setOrders(mockOrders);
         } catch (error) {
             console.error("Error cargando órdenes:", error);
             setError("Error cargando las órdenes de compra");
@@ -38,7 +95,7 @@ const ProveeduriaPage: React.FC = () => {
         }
     };
 
-    const handleView = (order: OrdenDeCompraResponse) => {
+    const handleView = (order: any) => {
         setSelectedOrder(order);
         setShowDetailModal(true);
     };
@@ -78,6 +135,14 @@ const ProveeduriaPage: React.FC = () => {
                     <p className="text-red-600 text-sm">{error}</p>
                 </div>
             )}
+
+            {/* INFO BACKEND */}
+            <div className="mx-6 mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-blue-600 text-sm">
+                    <strong>Modo Desarrollo:</strong> Usando datos de prueba. 
+                    Conectado al backend en http://localhost:3000 para autenticación.
+                </p>
+            </div>
 
             {/* FILTROS */}
             <div className="flex flex-wrap items-center justify-between gap-4 px-6 py-4 bg-white border-b border-[#cfdbe7]">
@@ -244,7 +309,7 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
 /* -------- MODAL DE DETALLE -------- */
 
 interface DetalleOrdenModalProps {
-    order: OrdenDeCompraResponse;
+    order: any;
     onClose: () => void;
 }
 

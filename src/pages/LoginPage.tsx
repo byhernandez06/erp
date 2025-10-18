@@ -146,10 +146,10 @@ const LoginPage: React.FC = () => {
                 {/* Información de desarrollo */}
                 <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                     <p className="text-xs text-blue-600 dark:text-blue-400 text-center">
-                        <strong>Modo Desarrollo:</strong> Usando base de datos MySQL local
+                        <strong>Conectado al Backend:</strong> http://localhost:3000
                     </p>
                     <p className="text-xs text-blue-600 dark:text-blue-400 text-center mt-1">
-                        Para crear una cuenta, contacte al administrador del sistema
+                        Endpoints disponibles: /auth/login, /auth/register
                     </p>
                 </div>
             </div>

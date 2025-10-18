@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { crearOrdenDeCompra } from "@/services/ordenesDeCompraService";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/store/store";
 
@@ -93,8 +92,12 @@ const OrdenDeCompraModal: React.FC<OrdenDeCompraModalProps> = ({ isOpen, onClose
             setLoading(true);
             setMensaje(null);
             
-            await crearOrdenDeCompra(user.uid, form);
-            setMensaje("✅ Orden guardada correctamente");
+            // TODO: Implementar llamada al backend cuando esté disponible el endpoint
+            // await crearOrdenDeCompra(form);
+            
+            // Simulación de guardado exitoso
+            console.log('Orden a guardar:', form);
+            setMensaje("✅ Orden guardada correctamente (simulación)");
             
             // Limpiar el formulario
             setForm({
@@ -154,13 +157,20 @@ const OrdenDeCompraModal: React.FC<OrdenDeCompraModalProps> = ({ isOpen, onClose
                         >
                             {/* Header */}
                             <div className="flex items-center justify-between border-b border-slate-200 px-6 py-3 bg-white sticky top-0 z-10">
-                                <h2 className="text-lg font-bold text-[#0d141b]">Órdenes de Compra</h2>
+                                <h2 className="text-lg font-bold text-[#0d141b]">Nueva Orden de Compra</h2>
                                 <button
                                     onClick={onClose}
                                     className="text-[#0d141b] hover:text-red-500 font-semibold"
                                 >
                                     ✕
                                 </button>
+                            </div>
+
+                            {/* Info Backend */}
+                            <div className="mx-6 mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                <p className="text-yellow-700 text-sm">
+                                    <strong>Modo Desarrollo:</strong> Esta funcionalidad guardará datos cuando se implemente el endpoint correspondiente en el backend.
+                                </p>
                             </div>
 
                             {/* Contenido */}
@@ -176,8 +186,8 @@ const OrdenDeCompraModal: React.FC<OrdenDeCompraModalProps> = ({ isOpen, onClose
                                             className="w-full rounded-lg border border-[#cfdbe7] bg-slate-50 p-[15px] h-14 text-base focus:outline-none"
                                         >
                                             <option value="">Seleccionar licitación</option>
-                                            <option value="Licitacion 1">Licitacion 1</option>
-                                            <option value="Licitacion 2">Licitacion 2</option>
+                                            <option value="Licitacion 2024-001">Licitación 2024-001</option>
+                                            <option value="Licitacion 2024-002">Licitación 2024-002</option>
                                         </select>
                                     </div>
 
@@ -199,7 +209,7 @@ const OrdenDeCompraModal: React.FC<OrdenDeCompraModalProps> = ({ isOpen, onClose
                                                 name="numeroOrden"
                                                 value={form.numeroOrden}
                                                 onChange={handleChange}
-                                                placeholder=""
+                                                placeholder="ORD-001"
                                                 className="w-full rounded-lg border border-[#cfdbe7] bg-slate-50 p-[15px] h-14 text-base focus:outline-none"
                                             />
                                         </div>
@@ -215,8 +225,8 @@ const OrdenDeCompraModal: React.FC<OrdenDeCompraModalProps> = ({ isOpen, onClose
                                             className="w-full rounded-lg border border-[#cfdbe7] bg-slate-50 p-[15px] h-14 text-base focus:outline-none"
                                         >
                                             <option value="">Seleccionar proveedor</option>
-                                            <option value="Proveedor 1">Proveedor 1</option>
-                                            <option value="Proveedor 2">Proveedor 2</option>
+                                            <option value="Proveedor ABC S.A.">Proveedor ABC S.A.</option>
+                                            <option value="Suministros XYZ Ltda.">Suministros XYZ Ltda.</option>
                                         </select>
                                     </div>
 
@@ -227,7 +237,7 @@ const OrdenDeCompraModal: React.FC<OrdenDeCompraModalProps> = ({ isOpen, onClose
                                             name="descripcion"
                                             value={form.descripcion}
                                             onChange={handleChange}
-                                            placeholder="Ingrese la descripción"
+                                            placeholder="Ingrese la descripción de la orden"
                                             className="w-full rounded-lg border border-[#cfdbe7] bg-slate-50 p-[15px] min-h-36 text-base focus:outline-none"
                                         ></textarea>
                                     </div>
@@ -240,7 +250,7 @@ const OrdenDeCompraModal: React.FC<OrdenDeCompraModalProps> = ({ isOpen, onClose
                                                 name="proyecto"
                                                 value={form.proyecto}
                                                 onChange={handleChange}
-                                                placeholder="Seleccionar proyecto"
+                                                placeholder="Nombre del proyecto"
                                                 className="w-full rounded-lg border border-[#cfdbe7] bg-slate-50 p-[15px] h-14 text-base focus:outline-none"
                                             />
                                         </div>
@@ -250,7 +260,7 @@ const OrdenDeCompraModal: React.FC<OrdenDeCompraModalProps> = ({ isOpen, onClose
                                                 name="lugarEntrega"
                                                 value={form.lugarEntrega}
                                                 onChange={handleChange}
-                                                placeholder="Ingrese el lugar de entrega"
+                                                placeholder="Dirección de entrega"
                                                 className="w-full rounded-lg border border-[#cfdbe7] bg-slate-50 p-[15px] h-14 text-base focus:outline-none"
                                             />
                                         </div>
@@ -264,7 +274,7 @@ const OrdenDeCompraModal: React.FC<OrdenDeCompraModalProps> = ({ isOpen, onClose
                                                 name="solicitante"
                                                 value={form.solicitante}
                                                 onChange={handleChange}
-                                                placeholder="Ingrese el solicitante"
+                                                placeholder="Nombre del solicitante"
                                                 className="w-full rounded-lg border border-[#cfdbe7] bg-slate-50 p-[15px] h-14 text-base focus:outline-none"
                                             />
                                         </div>
@@ -274,7 +284,7 @@ const OrdenDeCompraModal: React.FC<OrdenDeCompraModalProps> = ({ isOpen, onClose
                                                 name="cedulaJuridica"
                                                 value={form.cedulaJuridica}
                                                 onChange={handleChange}
-                                                placeholder="Ingrese la cédula jurídica"
+                                                placeholder="3-101-123456"
                                                 className="w-full rounded-lg border border-[#cfdbe7] bg-slate-50 p-[15px] h-14 text-base focus:outline-none"
                                             />
                                         </div>
@@ -349,6 +359,7 @@ const OrdenDeCompraModal: React.FC<OrdenDeCompraModalProps> = ({ isOpen, onClose
                                                             <td className="px-4 py-2">
                                                                 <input
                                                                     type="number"
+                                                                    step="0.01"
                                                                     value={item.costoUnitario}
                                                                     onChange={(e) => handleItemChange(idx, "costoUnitario", Number(e.target.value))}
                                                                     className="w-28 border rounded-md p-1 text-right"
@@ -357,7 +368,7 @@ const OrdenDeCompraModal: React.FC<OrdenDeCompraModalProps> = ({ isOpen, onClose
 
                                                             {/* Monto Total */}
                                                             <td className="px-4 py-2 text-right text-[#4c739a] font-semibold">
-                                                                {item.montoTotal.toFixed(2)}
+                                                                ₡{item.montoTotal.toFixed(2)}
                                                             </td>
 
                                                             {/* Eliminar */}
