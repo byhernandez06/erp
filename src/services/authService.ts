@@ -14,7 +14,7 @@ export interface AuthResponse {
 export const signInUser = async (email: string, password: string): Promise<AuthResponse> => {
     try {
         const response = await authAPI.login(email, password);
-        
+
         // Asumir que el backend devuelve: { user: { uid, email }, token }
         if (!response.user || !response.token) {
             throw new Error('Respuesta inválida del servidor');
@@ -36,8 +36,8 @@ export const signInUser = async (email: string, password: string): Promise<AuthR
 // Función para obtener el usuario actual
 export const getCurrentUser = async (token: string): Promise<User | null> => {
     try {
-        const response = await authAPI.getCurrentUser();
-        
+        const response = await authAPI.getCurrentUser(token); // pasamos token
+
         if (!response.user) {
             return null;
         }
@@ -51,6 +51,7 @@ export const getCurrentUser = async (token: string): Promise<User | null> => {
         return null;
     }
 };
+
 
 // Función para cerrar sesión
 export const signOutUser = async (): Promise<void> => {

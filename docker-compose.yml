@@ -1,0 +1,15 @@
+version: "3.9"
+
+services:
+  frontend:
+    build: .
+    container_name: erp-frontend
+    ports:
+      - "5173:5173"   # Puerto Vite o Nginx según la configuración
+    restart: unless-stopped
+    networks:
+      - erp-network
+
+networks:
+  erp-network:
+    external: true

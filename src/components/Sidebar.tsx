@@ -1,6 +1,17 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Package, LogOut } from "lucide-react";
+import {
+    Home,
+    Package,
+    DollarSign,
+    Users,
+    FileText,
+    CreditCard,
+    BarChart,
+    Archive,
+    FileText as ReportIcon,
+    LogOut
+} from "lucide-react";
 import { useSelector } from "react-redux";
 import { useAuth } from "@/contexts/AuthContext";
 import type { RootState } from "@/store/store";
@@ -22,6 +33,41 @@ const Sidebar: React.FC = () => {
             name: "Proveeduría",
             icon: Package,
         },
+        {
+            path: "/finanzas",
+            name: "Finanzas",
+            icon: DollarSign,
+        },
+        {
+            path: "/recursos-humanos",
+            name: "Recursos Humanos",
+            icon: Users,
+        },
+        {
+            path: "/presupuesto",
+            name: "Presupuesto",
+            icon: FileText,
+        },
+        {
+            path: "/tesoreria",
+            name: "Tesorería",
+            icon: CreditCard,
+        },
+        {
+            path: "/contabilidad",
+            name: "Contabilidad",
+            icon: BarChart,
+        },
+        {
+            path: "/inventarios",
+            name: "Inventarios",
+            icon: Archive,
+        },
+        {
+            path: "/reportes",
+            name: "Reportes",
+            icon: ReportIcon,
+        }
     ];
 
     const handleLogout = () => {
@@ -41,10 +87,10 @@ const Sidebar: React.FC = () => {
                 />
                 <div>
                     <h1 className="text-lg font-bold text-[#0d141b]">
-                        ERP Municipal
+                        Municipalidad CR
                     </h1>
                     <p className="text-sm text-[#4c739a]">
-                        Oreamuno
+                        Panel de Administración
                     </p>
                 </div>
             </div>
@@ -72,16 +118,15 @@ const Sidebar: React.FC = () => {
                     {menuItems.map((item) => {
                         const Icon = item.icon;
                         const isActive = location.pathname === item.path;
-                        
+
                         return (
                             <li key={item.path}>
                                 <Link
                                     to={item.path}
-                                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                                        isActive
+                                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive
                                             ? "bg-[#1380ec] text-white"
                                             : "text-[#4c739a] hover:bg-slate-100 hover:text-[#0d141b]"
-                                    }`}
+                                        }`}
                                 >
                                     <Icon size={18} />
                                     {item.name}

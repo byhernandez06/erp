@@ -1,0 +1,17 @@
+version: "3.9"
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: erp-frontend
+    ports:
+      - "80:80"                # Puerto estándar HTTP
+    restart: unless-stopped
+    networks:
+      - erp-network
+
+networks:
+  erp-network:
+    external: true

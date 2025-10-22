@@ -1,0 +1,30 @@
+# Etapa de build
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Copiamos package.json y package-lock.json
+COPY package*.json ./
+
+# Instalamos dependencias
+RUN npm ci --prefer-offline --legacy-peer-deps
+
+# Copiamos el resto del proyecto
+COPY . .
+
+# Compilamos con límite de memoria aumentado para Node
+RUN NODE_OPTIONS="--max-old-space-size=1024" npm run build
+
+# Etapa de producción
+FROM nginx:alpine
+
+# Copiamos los archivos compilados
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Copiamos un nginx.conf personalizado si querés rutas SPA
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+
+# Arrancamos Nginx en primer plano
+CMD ["nginx", "-g", "daemon off;"]

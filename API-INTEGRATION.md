@@ -24,6 +24,14 @@ Servicio base para comunicación con el backend:
   - `GET /auth/me`
   - CRUD completo para órdenes (preparado para futura implementación)
 
+### Flujo /auth/me
+- Flujo Completo:
+  - Usuario hace login → Recibe token → Se guarda en localStorage
+  - Usuario cierra navegador → Token permanece guardado
+  - Usuario abre la app → Frontend encuentra token → Llama GET /auth/me
+  - Si token válido → Usuario sigue autenticado automáticamente
+  - Si token inválido → Usuario debe hacer login nuevamente 
+
 #### `src/services/authService.ts`
 Servicio de autenticación refactorizado:
 - `signInUser()` - Login usando endpoint del backend

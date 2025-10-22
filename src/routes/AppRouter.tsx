@@ -10,42 +10,43 @@ import ProveeduriaPage from "@/pages/ProveeduriaPage";
 import { AuthProvider } from "@/contexts/AuthContext";
 
 const AppRouter: React.FC = () => {
-    return (
-        <Router>
-            <AuthProvider>
-                <Routes>
-                    <Route path="/login" element={<LoginPage />} />
-                    <Route path="/*" element={<ProtectedRoutes />} />
-                </Routes>
-            </AuthProvider>
-        </Router>
-    );
+  return (
+    <Router>
+      <AuthProvider>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/*" element={<ProtectedRoutes />} />
+        </Routes>
+      </AuthProvider>
+    </Router>
+  );
 };
 
 const ProtectedRoutes: React.FC = () => {
-    const { user, loading } = useSelector((state: RootState) => state.auth);
+  const { user, loading } = useSelector((state: RootState) => state.auth);
 
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="text-lg">Cargando...</div>
-            </div>
-        );
-    }
-
-    if (!user) {
-        return <Navigate to="/login" replace />;
-    }
-
+  if (loading) {
     return (
-        <DashboardLayout>
-            <Routes>
-                <Route path="/" element={<DashboardPage />} />
-                <Route path="/proveeduria" element={<ProveeduriaPage />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-        </DashboardLayout>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-lg">Cargando...</div>
+      </div>
     );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Ahora usamos rutas anidadas con DashboardLayout y Outlet
+  return (
+    <Routes>
+      <Route path="/" element={<DashboardLayout />}>
+        <Route index element={<DashboardPage />} />
+        <Route path="proveeduria" element={<ProveeduriaPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Route>
+    </Routes>
+  );
 };
 
 export default AppRouter;

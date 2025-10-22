@@ -1,5 +1,6 @@
 // Configuración base para las llamadas a la API
-const API_BASE_URL = 'http://localhost:3000/api/v1';
+// const API_BASE_URL = 'http://localhost:3000/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
 
 // Configuración de headers por defecto
 const getHeaders = (includeAuth: boolean = true) => {
@@ -45,11 +46,15 @@ export const authAPI = {
     return handleResponse(response);
   },
 
-  getCurrentUser: async () => {
+  getCurrentUser: async (token: string) => {
     const response = await fetch(`${API_BASE_URL}/auth/me`, {
       method: 'GET',
-      headers: getHeaders(),
+      headers: {
+        ...getHeaders(),
+        Authorization: `Bearer ${token}`
+      },
     });
+
     return handleResponse(response);
   },
 };
