@@ -58,7 +58,7 @@ const Sidebar: React.FC = () => {
             {/* Menú scrollable */}
             <div className="flex-1 flex flex-col gap-2 overflow-y-auto">
                 <SidebarItem label="Dashboard" icon={<LayoutDashboard size={20} />} to="/dashboard" />
-                <SidebarItem label="Proveeduría" icon={<Truck size={20} />} to="/proveeduria" />
+                <SidebarItem label="Proveedores" icon={<Truck size={20} />} to="/proveedores-menu" />
                 <SidebarItem label="Finanzas" icon={<DollarSign size={20} />} to="/finanzas" />
                 <SidebarItem label="Recursos Humanos" icon={<Users size={20} />} to="/rrhh" />
                 <SidebarItem label="Presupuesto" icon={<BarChart3 size={20} />} to="/presupuesto" />
