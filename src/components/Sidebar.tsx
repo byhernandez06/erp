@@ -16,6 +16,8 @@ import {
     LogOut
 } from "lucide-react";
 
+import logo from "@/assets/images/logo-curridabat.png"
+
 interface SidebarItemProps {
     icon: React.ReactNode;
     label: string;
@@ -50,9 +52,18 @@ const Sidebar: React.FC = () => {
     return (
         <aside className="flex flex-col justify-between w-80 h-screen bg-slate-50 p-4">
             {/* Branding */}
-            <div className="flex flex-col mb-4">
-                <h1 className="text-[#0d141b] text-base font-medium">Municipalidad CR</h1>
-                <p className="text-[#4c739a] text-sm font-normal">Panel de Administración</p>
+            <div className="flex flex-col items-center mb-4">
+                <img
+                    src={logo}
+                    alt="Logo Municipalidad de Curridabat"
+                    className="w-20 h-20 mb-2 object-contain"
+                />
+                <h1 className="text-[#0d141b] text-base font-medium text-center">
+                    Municipalidad de Curridabat
+                </h1>
+                <p className="text-[#4c739a] text-sm font-normal text-center">
+                    Panel de Administración
+                </p>
             </div>
 
             {/* Menú scrollable */}

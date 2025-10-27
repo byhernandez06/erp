@@ -39,7 +39,7 @@ const ProveeduriaPage: React.FC = () => {
             {/* HEADER */}
             <div className="flex flex-wrap justify-between items-center gap-3 p-6 border-b border-[#cfdbe7] bg-white">
                 <h1 className="text-[32px] font-bold leading-tight tracking-[-0.015em]">
-                    Proveeduría
+                    Órdenes de Compra
                 </h1>
                 <button
                     onClick={() => setShowModal(true)}
@@ -71,7 +71,7 @@ const ProveeduriaPage: React.FC = () => {
 
             {/* RESUMEN */}
             <div className="px-6 py-6">
-                <h2 className="text-[22px] font-bold pb-3">Resumen de Proveeduría</h2>
+                <h2 className="text-[22px] font-bold pb-3">Resumen de Órdenes</h2>
                 <div className="flex flex-wrap gap-4">
                     <SummaryCard
                         title="Total de Órdenes"

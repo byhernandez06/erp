@@ -4,7 +4,7 @@ import { auth } from "@/firebase/config";
 import { useDispatch } from "react-redux";
 import { setUser } from "@/store/slices/authSlice";
 import { User, Lock } from "lucide-react"; // <-- íconos Lucide
-import logo from "@/assets/images/logo-oreamuno.png";
+import logo from "@/assets/images/logo-curridabat.png";
 
 const LoginPage: React.FC = () => {
     const [email, setEmail] = useState("");
