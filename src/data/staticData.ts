@@ -36,7 +36,7 @@ export const licitaciones = [
     },
     {
         id: 2,
-        codigo: "LIC-2024-002", 
+        codigo: "LIC-2024-002",
         descripcion: "Adquisición de Equipos de Cómputo"
     },
     {
@@ -52,38 +52,27 @@ export const licitaciones = [
 ];
 
 export const proyectos = [
-    {
-        id: 1,
-        nombre: "Administración"
-    },
-    {
-        id: 2,
-        nombre: "Catastro"
-    },
-    {
-        id: 3,
-        nombre: "Obras Públicas"
-    },
-    {
-        id: 4,
-        nombre: "Servicios Municipales"
-    },
-    {
-        id: 5,
-        nombre: "Desarrollo Social"
-    },
-    {
-        id: 6,
-        nombre: "Planificación Urbana"
-    },
-    {
-        id: 7,
-        nombre: "Gestión Ambiental"
-    },
-    {
-        id: 8,
-        nombre: "Tecnologías de Información"
-    }
+    { id: 1, nombre: "Administración General" },
+    { id: 2, nombre: "Auditoría Interna" },
+    { id: 3, nombre: "Administración de Inversiones Propias" },
+    { id: 4, nombre: "Registro de la Deuda, Fondos y Transferencias" },
+    { id: 5, nombre: "Servicio de Recolección de Basura" },
+    { id: 6, nombre: "Caminos y Calles" },
+    { id: 7, nombre: "Educativos, Culturales y Deportivos" },
+    { id: 8, nombre: "Servicios Sociales y Complementarios" },
+    { id: 9, nombre: "Mejoramiento de la Zona Marítimo Terrestre" },
+    { id: 10, nombre: "Depósito y Tratamiento de Basura" },
+    { id: 11, nombre: "Mantenimiento de Edificios" },
+    { id: 12, nombre: "Protección del Medio Ambiente" },
+];
+
+
+export const solicitantesDummy = [
+    { id: 1, nombre: "Carlos Jiménez" },
+    { id: 2, nombre: "Andrea Muñoz" },
+    { id: 3, nombre: "Daniel Corrales" },
+    { id: 4, nombre: "Pamela Rojas" },
+    { id: 5, nombre: "María Echandi" },
 ];
 
 // Función para generar saldo disponible aleatorio

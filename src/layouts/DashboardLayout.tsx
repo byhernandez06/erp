@@ -6,7 +6,7 @@ import { Outlet } from "react-router-dom";
 const DashboardLayout: React.FC = () => {
     return (
         <div
-            className="flex min-h-screen bg-slate-50"
+            className="flex min-h-screen bg-slate-50 bg-red"
             style={{ fontFamily: '"Public Sans", "Noto Sans", sans-serif' }}
         >
             {/* Sidebar */}

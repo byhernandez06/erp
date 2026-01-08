@@ -16,7 +16,7 @@ import {
     LogOut
 } from "lucide-react";
 
-import logo from "@/assets/images/logo-curridabat.png"
+import logo from "@/assets/images/logo-muni.png"
 
 interface SidebarItemProps {
     icon: React.ReactNode;
@@ -55,11 +55,11 @@ const Sidebar: React.FC = () => {
             <div className="flex flex-col items-center mb-4">
                 <img
                     src={logo}
-                    alt="Logo Municipalidad de Curridabat"
+                    alt="Logo Municipalidad CR"
                     className="w-20 h-20 mb-2 object-contain"
                 />
                 <h1 className="text-[#0d141b] text-base font-medium text-center">
-                    Municipalidad de Curridabat
+                    Municipalidad CR
                 </h1>
                 <p className="text-[#4c739a] text-sm font-normal text-center">
                     Panel de Administración
@@ -69,7 +69,7 @@ const Sidebar: React.FC = () => {
             {/* Menú scrollable */}
             <div className="flex-1 flex flex-col gap-2 overflow-y-auto">
                 <SidebarItem label="Dashboard" icon={<LayoutDashboard size={20} />} to="/dashboard" />
-                <SidebarItem label="Proveedores" icon={<Truck size={20} />} to="/proveedores-menu" />
+                <SidebarItem label="Proveeduría" icon={<Truck size={20} />} to="/proveedores-menu" />
                 <SidebarItem label="Finanzas" icon={<DollarSign size={20} />} to="/finanzas" />
                 <SidebarItem label="Recursos Humanos" icon={<Users size={20} />} to="/rrhh" />
                 <SidebarItem label="Presupuesto" icon={<BarChart3 size={20} />} to="/presupuesto" />

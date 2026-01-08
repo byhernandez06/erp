@@ -1,22 +1,22 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
-const ProveedoresMenuPage: React.FC = () => {
+const VendorsMenuPage: React.FC = () => {
     const navigate = useNavigate();
 
     const menuItems = [
-        { id: 1, title: "Entradas x Compra", icon: "📦", route: "/entradas-compra" },
-        { id: 2, title: "Entradas x Ajustes", icon: "📝", route: "/entradas-ajustes" },
+        { id: 12, title: "Proveedores", icon: "📖", route: "/gestionar-proveedores" },
+        { id: 1, title: "Entradas x Compra", icon: "🧾", route: "/entradas-compra" },
+        { id: 2, title: "Entradas x Ajustes", icon: "📩", route: "/entradas-ajustes" },
         { id: 3, title: "Salidas x Ajustes", icon: "📤", route: "/salidas-ajustes" },
         { id: 4, title: "Salidas x Requisición", icon: "📋", route: "/salidas-requisicion" },
         { id: 5, title: "Buscar Órdenes", icon: "🔍", route: "/buscar-ordenes" },
-        { id: 6, title: "Órdenes de Compra", icon: "🛒", route: "/proveeduria" },
+        { id: 6, title: "Órdenes de Compra", icon: "📝", route: "/proveeduria" },
         { id: 7, title: "Compromisos", icon: "🤝", route: "/compromisos" },
         { id: 8, title: "Reservas", icon: "📅", route: "/reservas" },
         { id: 9, title: "Consultar Cheques", icon: "💰", route: "/consultar-cheques" },
         { id: 10, title: "Consultar Órdenes", icon: "📊", route: "/consultar-ordenes" },
-        { id: 11, title: "Consultar Transferencias", icon: "💸", route: "/consultar-transferencias" },
-        { id: 12, title: "Proveedores", icon: "🏢", route: "/gestionar-proveedores" },
+        { id: 11, title: "Consultar Transferencias", icon: "💳", route: "/consultar-transferencias" },
         { id: 13, title: "Nómina de Pago", icon: "💵", route: "/nomina-pago" },
         { id: 14, title: "Familias", icon: "👥", route: "/familias" },
         { id: 15, title: "Artículos", icon: "📦", route: "/articulos" },
@@ -30,8 +30,9 @@ const ProveedoresMenuPage: React.FC = () => {
 
     return (
         <div className="flex flex-col w-full bg-slate-50 text-[#0d141b]">
+            {/* <div className="flex flex-col w-full min-h-screen bg-[#c4e1f2] text-[#0d141b]"> */}
             {/* HEADER */}
-            <div className="flex flex-wrap justify-between items-center gap-3 p-6 border-b border-[#cfdbe7] bg-white">
+            <div className="flex flex-wrap justify-between items-center gap-3 p-6 border-b border-[#cfdbe7] bg-[#e7edf3]">
                 <h1 className="text-[32px] font-bold leading-tight tracking-[-0.015em]">
                     Menú de Proveedores
                 </h1>
@@ -50,17 +51,27 @@ const ProveedoresMenuPage: React.FC = () => {
                         <div
                             key={item.id}
                             onClick={() => handleMenuClick(item.route)}
-                            className="bg-white rounded-lg border border-[#cfdbe7] p-6 hover:shadow-lg hover:border-blue-300 transition-all cursor-pointer group"
+                            className="
+        relative rounded-xl border border-[#A7CDE4]
+        p-6 shadow-sm hover:shadow-lg  
+        hover:-translate-y-1 transition-all 
+        cursor-pointer group overflow-hidden
+    "
                         >
+                            {/* Franja azul institucional */}
+                            <div className="absolute top-0 left-0 w-full h-1.5 bg-[#0554F2] opacity-0 group-hover:opacity-100 transition-all"></div>
+
+                            {/* Contenido */}
                             <div className="flex flex-col items-center text-center space-y-3">
-                                <div className="text-3xl group-hover:scale-110 transition-transform">
+                                <div className="text-4xl group-hover:scale-125 transition-transform">
                                     {item.icon}
                                 </div>
-                                <h3 className="text-sm font-semibold text-[#0d141b] group-hover:text-blue-600 transition-colors">
+                                <h3 className="text-sm font-semibold text-[#0D141B] group-hover:text-[#1380ec] transition-colors">
                                     {item.title}
                                 </h3>
                             </div>
                         </div>
+
                     ))}
                 </div>
             </div>
@@ -78,4 +89,4 @@ const ProveedoresMenuPage: React.FC = () => {
     );
 };
 
-export default ProveedoresMenuPage;
+export default VendorsMenuPage;

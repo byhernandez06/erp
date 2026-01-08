@@ -1,30 +1,48 @@
-import React, { createContext, useEffect } from "react";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "@/firebase/config";
-import { useDispatch, useSelector } from "react-redux";
-import { setUser } from "@/store/slices/authSlice";
-import type { RootState } from "@/store/store";
+// src/contexts/AuthContext.tsx
+import React, { createContext, useContext, useState, useEffect } from "react";
 
-const AuthContext = createContext({});
+interface User {
+    uid: string;
+    email: string;
+}
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-    const dispatch = useDispatch();
-    const { loading } = useSelector((state: RootState) => state.auth);
+interface AuthContextType {
+    user: User | null;
+    loading: boolean;
+    logout: () => void;
+}
+
+const AuthContext = createContext<AuthContextType>({
+    user: null,
+    loading: true,
+    logout: () => { },
+});
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const [user, setUser] = useState<User | null>(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            if (user) {
-                dispatch(setUser({ uid: user.uid, email: user.email }));
-            } else {
-                dispatch(setUser(null));
-            }
-        });
-        return unsubscribe;
-    }, [dispatch]);
+        // Cargar datos desde localStorage (en lugar de /auth/me)
+        const storedUser = localStorage.getItem("user");
+        if (storedUser) {
+            setUser(JSON.parse(storedUser));
+        }
+        setLoading(false);
+    }, []);
 
-    if (loading) return <div>Cargando...</div>;
+    const logout = () => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        setUser(null);
+        window.location.href = "/login";
+    };
 
-    return <>{children}</>;
+    return (
+        <AuthContext.Provider value={{ user, loading, logout }}>
+            {children}
+        </AuthContext.Provider>
+    );
 };
 
-export default AuthContext;
+export const useAuth = () => useContext(AuthContext);
