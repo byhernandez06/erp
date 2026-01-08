@@ -18,8 +18,8 @@ const initialState: BudgetAccountsState = {
 };
 
 // Ajustaremos esto cuando veamos el JSON real
-const pickCode = (a: any) => String(a.codigo ?? a.code ?? a.account ?? a.CUENTA ?? "").trim();
-const pickName = (a: any) => String(a.nombre ?? a.name ?? a.descripcion ?? a.description ?? "").trim();
+const pickCode = (a: any) => String(a.CUENTA ?? "").trim();
+const pickName = (a: any) => String(a.DESCRI1 ?? "").trim();
 
 export const fetchBudgetAccounts = createAsyncThunk(
     "budgetAccounts/fetchAll",

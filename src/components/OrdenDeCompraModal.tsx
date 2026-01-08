@@ -215,7 +215,7 @@ const OrdenDeCompraModal: React.FC<OrdenDeCompraModalProps> = ({ isOpen, onClose
                 ]);
 
                 setVendors(list as Vendor[]);
-
+                console.log("Cuentas mapping: ", cuentas)
                 const data = cuentas as PartidaPresupuestaria[];
                 data.sort((a, b) => a.CUENTA.localeCompare(b.CUENTA));
                 setTodasLasCuentas(data);

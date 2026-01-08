@@ -9,7 +9,11 @@ import logo from "@/assets/images/logo-muni.png";
  * @param order Objeto con la información de la orden
  * @param soloPreview Si es true, devuelve el doc sin guardarlo
  */
-export const generarPdfOrdenCompra = (order: any, soloPreview: boolean = false): jsPDF => {
+export const generarPdfOrdenCompra = (
+    order: any,
+    soloPreview: boolean = false,
+    getAccountName?: (code: string) => string
+): jsPDF => {
     if (!order) throw new Error("❌ No se recibió una orden válida.");
 
     console.log("Order: ", order);
@@ -105,6 +109,7 @@ export const generarPdfOrdenCompra = (order: any, soloPreview: boolean = false):
 
             const detalle = it.detalle ?? it.DETALLE ?? it.detail ?? it.description ?? "—";
             const cuenta = it.cuenta ?? it.CUENTA ?? it.account ?? "—";
+            const nombreCuenta = getAccountName ? getAccountName(cuenta) : "—";
             const nombre = it.nombre ?? it.NOMBRE ?? it.itemName ?? "—";
 
             const unitarioNum = Number(it.costoUnitario ?? it.UNITARIO ?? it.unitario ?? 0);
@@ -114,6 +119,7 @@ export const generarPdfOrdenCompra = (order: any, soloPreview: boolean = false):
                 cant > 0 ? cant : "—",
                 detalle || "—",
                 cuenta || "—",
+                nombreCuenta,
                 nombre || "—",
                 formatearColones(unitarioNum),
                 formatearColones(totalNum),
@@ -140,20 +146,27 @@ export const generarPdfOrdenCompra = (order: any, soloPreview: boolean = false):
 
     autoTable(doc, {
         startY: y + 8,
-        head: [["Cant", "Detalle", "Cuenta", "Nombre", "Unitario", "Total"]],
+        head: [["Cant", "Detalle", "Cuenta", "Nombre cuenta", "Nombre", "Unitario", "Total"]],
         body: items,
         theme: "grid",
-        styles: { fontSize: 9, cellPadding: 3, valign: "middle" },
+        styles: {
+            fontSize: 8,          // baja 1pt ayuda muchísimo
+            cellPadding: 2,
+            valign: "middle",
+            overflow: "linebreak" // permite saltos de línea
+        },
         headStyles: { fillColor: [245, 245, 245], textColor: 0 },
         columnStyles: {
-            0: { cellWidth: 40, halign: "center" },
-            1: { cellWidth: 155 },
-            2: { cellWidth: 90 },
-            3: { cellWidth: 100 },
-            4: { cellWidth: 65, halign: "right" },
-            5: { cellWidth: 65, halign: "right" },
+            0: { cellWidth: 30, halign: "center" }, // Cant
+            1: { cellWidth: 140 },                  // Detalle
+            2: { cellWidth: 70, overflow: "ellipsize" }, // Cuenta (código)
+            3: { cellWidth: 120 },                  // Nombre cuenta
+            4: { cellWidth: 65 },                   // Nombre (item)
+            5: { cellWidth: 45, halign: "right" },  // Unitario
+            6: { cellWidth: 45, halign: "right" },  // Total
         },
     });
+
 
     /* ------------------- TOTALES ------------------- */
     const subtotal = Array.isArray(order.items)
@@ -164,7 +177,7 @@ export const generarPdfOrdenCompra = (order: any, soloPreview: boolean = false):
         : Number(order.montoTotal ?? order.MONTO ?? 0) || 0;
 
     const renta = subtotal > 365000 ? subtotal * 0.02 : 0;
-    const totalOrden = subtotal + renta;
+    const totalOrden = subtotal - renta;
     y = (doc as any).lastAutoTable.finalY + 25;
 
     // 🔹 Caja gris
