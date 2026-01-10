@@ -1,30 +1,35 @@
-import React, { useState, useEffect, useRef } from "react";
-import OrdenDeCompraModal from "@/components/OrdenDeCompraModal";
-import { store } from "@/store/store";
+import React, { useEffect, useRef, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 
+import OrdenDeCompraModal from "@/components/OrdenDeCompraModal";
 import { getNextOrderNumber } from "@/api/orders";
+
 import { generarPdfOrdenCompra } from "@/utils/pdfOrdenCompra";
 import { agruparLineasPorOrden } from "@/utils/groupOrders";
 import { generarCsvOrdenCompra } from "@/utils/csvOrdenCompra";
 import { normalizeOrderForUI } from "@/utils/normalizeOrder";
 
+import {
+    fetchBudgetAccounts,
+    selectBudgetAccountsStatus,
+    // 👉 si no existe, abajo te dejo cómo crearlo
+    selectBudgetAccountsMap,
+} from "@/store/slices/budgetAccountsSlice";
 
-import { useDispatch, useSelector } from "react-redux";
-import { fetchBudgetAccounts, selectBudgetAccountsStatus } from "@/store/slices/budgetAccountsSlice";
 import {
     fetchOrders,
     searchOrdersThunk,
-    setSearchTerm,
-    clearSearch,
+    setOrdersQuery,
+    clearOrdersQuery,
     selectOrders,
-    selectOrdersSearchTerm,
+    selectOrdersQuery,
     selectOrdersStatus,
+    selectOrdersIsSearching,
+    selectOrdersError,
 } from "@/store/slices/ordersSlice";
 
-
-
 /* ------------------------------------------------------
-   FUNCIÓN PARA EVITAR DUPLICAR ORDENES SIN ITEMS -> PDF
+   HELPERS
 ------------------------------------------------------ */
 const obtenerOrdenCompleta = (order: any, allOrders?: any[]) => {
     const safeOrder = JSON.parse(JSON.stringify(order));
@@ -38,7 +43,6 @@ const obtenerOrdenCompleta = (order: any, allOrders?: any[]) => {
 
     return ordenCompleta;
 };
-
 
 const toNumber = (v: any) => {
     const n = Number(v);
@@ -62,27 +66,19 @@ const getOrderTotal = (order: any) => {
     return toNumber(order?.MONTO ?? order?.total ?? 0);
 };
 
-
-
 /* ------------------------------------------------------
    FUNCIÓN PARA PREVIEW DE PDF
 ------------------------------------------------------ */
 const exportarPDFPreview = async (
     order: any,
-    setPreviewPdf: any,
-    setPreviewPdfName: any,
-    allOrders?: any[]
+    allOrders: any[] | undefined,
+    setPreviewPdf: (v: string | null) => void,
+    setPreviewPdfName: (v: string) => void,
+    getAccountName: (code: string) => string
 ) => {
     try {
-        // 1) Orden completa (si hiciera falta reconstruir)
-        const safeOrder = JSON.parse(JSON.stringify(order));
-        let ordenCompleta = safeOrder;
-
-        if ((!safeOrder.items || safeOrder.items.length === 0) && Array.isArray(allOrders)) {
-            const grouped = agruparLineasPorOrden(allOrders);
-            const encontrada = grouped.find((o: any) => o.orderNumber === safeOrder.orderNumber);
-            if (encontrada) ordenCompleta = encontrada;
-        }
+        // 1) Orden completa (si viniera sin items)
+        const ordenCompleta = obtenerOrdenCompleta(order, allOrders);
 
         if (!ordenCompleta.items || ordenCompleta.items.length === 0) {
             alert("Esta orden no contiene líneas para mostrar en el PDF.");
@@ -92,17 +88,11 @@ const exportarPDFPreview = async (
         // 2) Normalizar items (derivar unitario desde MONTO/CANT)
         const ordenNormalizada = normalizeOrderForUI(ordenCompleta);
 
-        const getAccountName = (code: string) => {
-            const key = String(code ?? "").trim();
-            const st: any = store.getState();
-            return st.budgetAccounts?.map?.[key] || "—";
-        };
-
-        // 3) Generar PDF con datos normalizados
+        // 3) Generar PDF con callback de nombre de cuenta
         const doc = generarPdfOrdenCompra(ordenNormalizada, true, getAccountName);
 
         // 4) Crear URL del blob
-        const blob = doc.output("blob"); // jsPDF devuelve Blob
+        const blob = doc.output("blob");
         const url = URL.createObjectURL(blob);
 
         setPreviewPdf(url);
@@ -113,7 +103,6 @@ const exportarPDFPreview = async (
     }
 };
 
-
 /* ------------------------------------------------------
    COMPONENTE PRINCIPAL
 ------------------------------------------------------ */
@@ -122,31 +111,42 @@ const OrdenesCompraPage: React.FC = () => {
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState<any>(null);
 
-    const dispatch = useDispatch();
-    const status = useSelector(selectBudgetAccountsStatus);
-
-    const orders = useSelector(selectOrders);
-    const searchTerm = useSelector(selectOrdersSearchTerm);
-    const ordersStatus = useSelector(selectOrdersStatus);
-
     const [previewPdf, setPreviewPdf] = useState<string | null>(null);
     const [previewPdfName, setPreviewPdfName] = useState("orden-sin-numero.pdf");
 
+    const dispatch = useDispatch();
+
+    // Redux: cuentas
+    const budgetStatus = useSelector(selectBudgetAccountsStatus);
+    const budgetMap = useSelector(selectBudgetAccountsMap);
+
+    // Redux: órdenes
+    const orders = useSelector(selectOrders);
+    const ordersStatus = useSelector(selectOrdersStatus);
+    const query = useSelector(selectOrdersQuery);
+    const isSearching = useSelector(selectOrdersIsSearching);
+    const ordersError = useSelector(selectOrdersError);
+
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    useEffect(() => {
-        if (status === "idle") {
-            dispatch(fetchOrders() as any);
-            dispatch(fetchBudgetAccounts() as any);
-        }
-    }, [ordersStatus, status, dispatch]);
+    // ✅ getter para el nombre de cuenta (sin store.getState)
+    const getAccountName = (code: string) => {
+        const key = String(code ?? "").trim();
+        return (budgetMap && budgetMap[key]) ? budgetMap[key] : "—";
+    };
 
-    /* ------------------------- Buscador (debounce) ------------------------ */
+    /* ------------------------- Carga inicial ------------------------ */
+    useEffect(() => {
+        if (ordersStatus === "idle") dispatch(fetchOrders() as any);
+        if (budgetStatus === "idle") dispatch(fetchBudgetAccounts() as any);
+    }, [ordersStatus, budgetStatus, dispatch]);
+
+    /* ------------------------- Buscador global (debounce) ------------------------ */
     useEffect(() => {
         if (debounceRef.current) clearTimeout(debounceRef.current);
 
         debounceRef.current = setTimeout(() => {
-            const term = searchTerm.trim();
+            const term = (query || "").trim();
 
             if (!term) {
                 dispatch(fetchOrders() as any);
@@ -159,31 +159,19 @@ const OrdenesCompraPage: React.FC = () => {
         return () => {
             if (debounceRef.current) clearTimeout(debounceRef.current);
         };
-    }, [searchTerm, dispatch]);
+    }, [query, dispatch]);
 
-
-
-
+    /* ------------------------- Cleanup blob url ------------------------ */
     useEffect(() => {
         return () => {
-            if (previewPdf) {
-                URL.revokeObjectURL(previewPdf);
-            }
+            if (previewPdf) URL.revokeObjectURL(previewPdf);
         };
     }, [previewPdf]);
 
-
-
-    /* ------------------------------------------------------
-   FUNCIÓN CORREGIDA: DUPLICAR ORDEN
-   (incluye tipo/licitación, proveedor, actividad, etc.)
------------------------------------------------------- */
+    /* ------------------------- Duplicar ------------------------ */
     const handleDuplicar = async (order: any) => {
         try {
-            // 1) Obtener la orden completa usando el array de Redux (orders)
             const completa = obtenerOrdenCompleta(order, orders);
-
-            // 2) Normalizar items (deriva unitario si viene 0)
             const ordenNormalizada = normalizeOrderForUI(completa);
 
             if (!ordenNormalizada.items?.length) {
@@ -191,23 +179,19 @@ const OrdenesCompraPage: React.FC = () => {
                 return;
             }
 
-            // 3) Crear copia para el modal
             const copia = JSON.parse(JSON.stringify(ordenNormalizada));
             const next = await getNextOrderNumber();
 
             copia.orderNumber = String(next);
             copia.date = new Date().toISOString().substring(0, 10);
 
-            // Mantener tipo/licitación
             copia.tipo = ordenNormalizada.tipo || ordenNormalizada.licitacion || "";
             copia.licitacion = ordenNormalizada.licitacion || ordenNormalizada.tipo || "";
 
-            // Mantener proveedor / actividad / cédula
             copia.providerName = ordenNormalizada.providerName || "";
             copia.activity = ordenNormalizada.activity || "";
             copia.juridic = ordenNormalizada.juridic || "";
 
-            // 4) Abrir modal con la copia
             setSelectedOrder(copia);
             setShowModal(true);
             setShowDetailModal(false);
@@ -216,9 +200,6 @@ const OrdenesCompraPage: React.FC = () => {
             console.error(err);
         }
     };
-
-
-
 
     return (
         <div className="flex flex-col w-full bg-slate-50 text-[#0d141b]">
@@ -240,23 +221,23 @@ const OrdenesCompraPage: React.FC = () => {
             {/* CONTENIDO */}
             <div className="px-6 py-6">
                 <div className="flex flex-col md:flex-row md:justify-between md:items-center pb-4 gap-3">
-                    <h2 className="text-[22px] font-bold">Actividad Reciente</h2>
+                    <h2 className="text-[22px] font-bold">Órdenes</h2>
 
                     <div className="flex items-center gap-2 w-full md:w-[400px]">
                         <div className="relative flex-1">
                             <input
                                 type="text"
                                 placeholder="Buscar por proveedor o número..."
-                                value={searchTerm}
-                                onChange={(e) => dispatch(setSearchTerm(e.target.value) as any)}
+                                value={query}
+                                onChange={(e) => dispatch(setOrdersQuery(e.target.value) as any)}
                                 className="w-full rounded-lg border pl-10 pr-3 py-2 text-sm"
                             />
                             <span className="absolute left-3 top-2.5 text-gray-400">🔍</span>
                         </div>
 
-                        {searchTerm && (
+                        {query && (
                             <button
-                                onClick={() => dispatch(clearSearch() as any)}
+                                onClick={() => dispatch(clearOrdersQuery() as any)}
                                 className="px-3 py-2 text-sm rounded-md border hover:bg-gray-100"
                             >
                                 Limpiar
@@ -264,6 +245,17 @@ const OrdenesCompraPage: React.FC = () => {
                         )}
                     </div>
                 </div>
+
+                {/* Estado / error */}
+                {ordersError && (
+                    <div className="mb-3 text-sm text-red-600">{ordersError}</div>
+                )}
+
+                {isSearching && query.trim() && (
+                    <div className="mb-3 text-sm text-gray-500">
+                        Buscando: <strong>{query}</strong>
+                    </div>
+                )}
 
                 {/* TABLA */}
                 <div className="overflow-hidden rounded-lg border bg-white shadow-sm">
@@ -280,26 +272,28 @@ const OrdenesCompraPage: React.FC = () => {
 
                         <tbody>
                             {orders.length > 0 ? (
-                                orders.map((order, index) => (
+                                orders.map((order: any, index: number) => (
                                     <ActivityRow
                                         key={`${order.orderNumber}-${index}`}
-                                        orderNumber={order.orderNumber}
-                                        date={order.date ? new Date(order.date).toLocaleDateString() : "—"}
-                                        provider={order.providerName}
-                                        total={getOrderTotal(order)}
                                         order={order}
-                                        setPreviewPdf={setPreviewPdf}
-                                        setPreviewPdfName={setPreviewPdfName}
-                                        orders={orders}
-                                        handleDuplicar={handleDuplicar}
-                                        setSelectedOrder={setSelectedOrder}
-                                        setShowDetailModal={setShowDetailModal}
+                                        total={getOrderTotal(order)}
+                                        onPdf={() =>
+                                            exportarPDFPreview(
+                                                order,
+                                                orders,
+                                                setPreviewPdf,
+                                                setPreviewPdfName,
+                                                getAccountName
+                                            )
+                                        }
+                                        onCsv={() => generarCsvOrdenCompra(normalizeOrderForUI(order))}
+                                        onDuplicar={() => handleDuplicar(order)}
                                     />
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan={4} className="text-center py-6 text-gray-500">
-                                        No hay órdenes registradas.
+                                    <td colSpan={5} className="text-center py-6 text-gray-500">
+                                        {ordersStatus === "loading" ? "Cargando..." : "No hay órdenes registradas."}
                                     </td>
                                 </tr>
                             )}
@@ -313,7 +307,7 @@ const OrdenesCompraPage: React.FC = () => {
                 isOpen={showModal}
                 onClose={() => {
                     setShowModal(false);
-                    setSelectedOrder(null);   // limpia orden previa
+                    setSelectedOrder(null);
                 }}
                 initialOrder={selectedOrder}
             />
@@ -325,9 +319,16 @@ const OrdenesCompraPage: React.FC = () => {
                         setShowDetailModal(false);
                         setSelectedOrder(null);
                     }}
-                    setPreviewPdf={setPreviewPdf}
-                    setPreviewPdfName={setPreviewPdfName}
-                    orders={orders}
+                    onPdf={() =>
+                        exportarPDFPreview(
+                            selectedOrder,
+                            orders,
+                            setPreviewPdf,
+                            setPreviewPdfName,
+                            getAccountName
+                        )
+                    }
+                    onCsv={() => generarCsvOrdenCompra(normalizeOrderForUI(selectedOrder))}
                 />
             )}
 
@@ -349,28 +350,20 @@ const OrdenesCompraPage: React.FC = () => {
    ROW DE LA TABLA
 ------------------------------------------------------ */
 const ActivityRow = ({
-    orderNumber,
-    date,
-    provider,
-    total,
     order,
-    setPreviewPdf,
-    setPreviewPdfName,
-    orders,
-    handleDuplicar,
-    setSelectedOrder,
-    setShowDetailModal
+    total,
+    onPdf,
+    onCsv,
+    onDuplicar,
 }: any) => (
     <tr className="border-t hover:bg-[#f8fafc]">
-        <td className="px-4 py-3 text-sm font-semibold">{orderNumber ?? "—"}</td>
+        <td className="px-4 py-3 text-sm font-semibold">{order?.orderNumber ?? "—"}</td>
 
         <td className="px-4 py-3 text-sm text-[#4c739a]">
-            {date}
+            {order?.date ? new Date(order.date).toLocaleDateString() : "—"}
         </td>
 
-        <td className="px-4 py-3 text-sm">
-            {provider}
-        </td>
+        <td className="px-4 py-3 text-sm">{order?.providerName ?? "—"}</td>
 
         <td className="px-4 py-3 text-sm font-semibold whitespace-nowrap">
             {formatCRC(total)}
@@ -378,21 +371,21 @@ const ActivityRow = ({
 
         <td className="px-4 py-3 text-sm text-right space-x-2">
             <button
-                onClick={() => exportarPDFPreview(order, setPreviewPdf, setPreviewPdfName, orders)}
+                onClick={onPdf}
                 className="bg-red-100 text-red-700 px-3 py-1 rounded-lg text-xs"
             >
                 PDF
             </button>
 
             <button
-                onClick={() => generarCsvOrdenCompra(normalizeOrderForUI(order))}
+                onClick={onCsv}
                 className="bg-blue-100 text-blue-700 px-3 py-1 rounded-lg text-xs"
             >
                 CSV
             </button>
 
             <button
-                onClick={() => handleDuplicar(order)}
+                onClick={onDuplicar}
                 className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-lg text-xs"
             >
                 Duplicar
@@ -401,32 +394,29 @@ const ActivityRow = ({
     </tr>
 );
 
-
-
 /* ------------------------------------------------------
    MODAL DETALLE
 ------------------------------------------------------ */
-const DetalleOrdenModal = ({ order, onClose, setPreviewPdf, setPreviewPdfName, orders }: any) => (
+const DetalleOrdenModal = ({ order, onClose, onPdf, onCsv }: any) => (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
         <div className="bg-white rounded-xl w-[480px] p-6 shadow-lg">
             <h2 className="text-xl font-semibold mb-4">Detalle de Orden</h2>
 
             <div className="space-y-2 text-sm">
-                <p><strong>Proveedor:</strong> {order.providerName}</p>
-                <p><strong>Descripción:</strong> {order.description}</p>
-                <p><strong>Fecha:</strong> {new Date(order.date).toLocaleDateString()}</p>
+                <p><strong>Proveedor:</strong> {order?.providerName}</p>
+                <p><strong>Fecha:</strong> {order?.date ? new Date(order.date).toLocaleDateString() : "—"}</p>
             </div>
 
             <div className="flex justify-end gap-2 mt-6">
                 <button
-                    onClick={async () => await generarCsvOrdenCompra(normalizeOrderForUI(order))}
+                    onClick={onCsv}
                     className="bg-blue-100 text-blue-700 px-3 py-2 rounded-lg text-sm"
                 >
                     CSV
                 </button>
 
                 <button
-                    onClick={() => exportarPDFPreview(order, setPreviewPdf, setPreviewPdfName, orders)}
+                    onClick={onPdf}
                     className="bg-red-100 text-red-700 px-3 py-2 rounded-lg text-sm"
                 >
                     Ver PDF
@@ -448,6 +438,7 @@ const DetalleOrdenModal = ({ order, onClose, setPreviewPdf, setPreviewPdfName, o
 ------------------------------------------------------ */
 const PreviewPDFModal = ({ pdfUrl, fileName, onClose }: any) => {
     if (!pdfUrl) return null;
+
     return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
             <div className="bg-white rounded-xl w-[90%] h-[90%] shadow-lg flex flex-col">

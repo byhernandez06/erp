@@ -17,9 +17,8 @@ const initialState: BudgetAccountsState = {
     map: {},
 };
 
-// Ajustaremos esto cuando veamos el JSON real
-const pickCode = (a: any) => String(a.CUENTA ?? "").trim();
-const pickName = (a: any) => String(a.DESCRI1 ?? "").trim();
+const pickCode = (a: any) => String(a?.CUENTA ?? "").trim();
+const pickName = (a: any) => String(a?.DESCRI1 ?? "").trim() || "—";
 
 export const fetchBudgetAccounts = createAsyncThunk(
     "budgetAccounts/fetchAll",
@@ -46,20 +45,29 @@ const budgetAccountsSlice = createSlice({
                 const map: Record<string, string> = {};
                 for (const a of action.payload) {
                     const code = pickCode(a);
-                    const name = pickName(a);
-                    if (code) map[code] = name || "—";
+                    if (!code) continue;
+                    map[code] = pickName(a);
                 }
                 state.map = map;
             })
             .addCase(fetchBudgetAccounts.rejected, (state, action) => {
                 state.status = "failed";
-                state.error = action.error.message || "Error cargando cuentas presupuestarias";
+                state.error =
+                    action.error.message || "Error cargando cuentas presupuestarias";
             });
     },
 });
 
 export default budgetAccountsSlice.reducer;
 
-export const selectBudgetAccountsStatus = (state: any) => state.budgetAccounts.status;
-export const selectAccountNameByCode = (code: string) => (state: any) =>
-    state.budgetAccounts.map?.[String(code ?? "").trim()] || "—";
+/* ---------------- Selectores ---------------- */
+export const selectBudgetAccountsStatus = (state: any) =>
+    state.budgetAccounts.status as BudgetAccountsState["status"];
+
+export const selectBudgetAccountsMap = (state: any) =>
+    (state.budgetAccounts.map || {}) as Record<string, string>;
+
+export const selectAccountNameByCode =
+    (code: string) =>
+        (state: any) =>
+            state.budgetAccounts.map?.[String(code ?? "").trim()] || "—";
